@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec.bak
+
+# the game's Oodle runtime - copy it in locally, do not redistribute
+oo2core_9_win64.dll
+
+# save backups, if anyone ever points the app at a save inside the repo
+*.bak
+*.palschematics.tmp
