@@ -8,6 +8,8 @@ PalSchematics is original software. Save parsing uses the community
 `palworld-save-tools` library (MIT); schematic data comes from
 [paldb.cc](https://paldb.cc/en/Schematic).
 
+![PalSchematics](docs/screenshot.png)
+
 ---
 
 ## What it does
@@ -86,6 +88,11 @@ and apply again.
 Switch the limits off in the Safety box and every free slot is fair game. Even
 then the container's real capacity is a hard bound: the app will never write a
 slot index the container does not have.
+
+## Building from source
+
+See [BUILDING.md](BUILDING.md) for the full instructions, including a
+one-directory build if a scanner objects to the single-file one.
 
 ## Building the .exe
 

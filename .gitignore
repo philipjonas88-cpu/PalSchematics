@@ -11,3 +11,5 @@ oo2core_9_win64.dll
 # save backups, if anyone ever points the app at a save inside the repo
 *.bak
 *.palschematics.tmp
+
+release/
