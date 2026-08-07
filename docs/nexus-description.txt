@@ -1,0 +1,81 @@
+PalSchematics - Nexus Mods description (BBCode, paste into the description box)
+================================================================================
+
+SUMMARY (the short one-liner field):
+Add any of Palworld's 602 schematics to your save - single player or dedicated
+server. Grouped, searchable, with backups and safety checks.
+
+--------------------------------------------------------------------------------
+
+[size=5]PalSchematics[/size]
+[i]Add any schematic to your Palworld save.[/i]
+
+Schematics in Palworld are ordinary inventory items. While one sits in your
+backpack it unlocks the matching recipe at the workbench - it is not consumed,
+and you can drop it or hand it to a friend. PalSchematics simply puts the item
+into a player's backpack in your save file.
+
+All [b]602 schematics[/b] paldb lists are here: weapons, armor, accessories,
+structures, pal gear and raid slabs, each with its own in-game icon.
+
+[size=4]Features[/size]
+[list]
+[*][b]Every schematic[/b] - 602 of them, each with icon, tier, rarity and the item it unlocks.
+[*][b]Grouped how you think about them[/b] - by category, category and type, tier (Schematic 1-4), rarity, workbench, or by item so all four tiers of one weapon sit together.
+[*][b]Search[/b] by schematic name, by the item it unlocks, or by internal code.
+[*][b]Dedicated servers supported[/b] - reads every player in the world and lets you pick one by name.
+[*][b]Backpack aware[/b] - shows exactly how many free slots the chosen player has and how many schematics fit right now.
+[*]Double-click any entry to open its paldb page.
+[/list]
+
+[size=4]How to use it[/size]
+[list=1]
+[*][b]Close Palworld, or stop your dedicated server.[/b] A running server keeps the world in memory and will overwrite your changes on its next autosave.
+[*]Copy [b]oo2core_9_win64.dll[/b] next to the program, from your own Palworld install:
+[i]Steam\steamapps\common\Palworld\Pal\Binaries\Win64\[/i]
+Palworld 1.0 saves are Oodle-compressed and need the game's own runtime to unpack. That file belongs to the game, so it is not included in this download.
+[*]Run it, then [b]File > Open Level.sav[/b]
+Single player: [i]%LOCALAPPDATA%\Pal\Saved\SaveGames\<id>\<world>\Level.sav[/i]
+Dedicated server: [i]Pal\Saved\SaveGames\0\<world>\Level.sav[/i]
+The [b]Players[/b] folder must sit next to Level.sav - that is where inventories are stored.
+[*]Pick your character, tick what you want, press [b]Apply to save[/b].
+[/list]
+
+[size=4]Safety[/size]
+Editing a save is editing a save. This one is built to fail safely rather than
+quietly:
+[list]
+[*][b]Round-trip check.[/b] Before anything is touched, your save is decoded and re-encoded, and the result must match the original byte for byte. If it cannot represent your save losslessly, it refuses to write at all.
+[*][b]Kept in its own format.[/b] A Palworld 1.0 save goes back Oodle-compressed, exactly as the game wrote it - not repacked into the older zlib format.
+[*][b]Verified before it replaces anything.[/b] The new save is built alongside the original, re-opened from disk, and checked for the items you asked for. Only then is it swapped in. A failure at any stage leaves your original untouched.
+[*][b]Notices a running server.[/b] If Level.sav changes on disk while the tool has it open, the write is refused.
+[*][b]Backups, on by default.[/b] A timestamped .bak lands next to your save. To roll back: stop the server and copy the .bak over Level.sav.
+[*][b]Inventory limits.[/b] It adds as many schematics as you have free slots, always leaving 5 empty - a completely full Palworld inventory is where items start landing on the ground. You can switch that off if you want every slot.
+[/list]
+
+[size=4]Two downloads[/size]
+[list]
+[*][b]PalSchematics (exe)[/b] - unzip and run. No Python needed.
+[*][b]PalSchematics (no-exe source)[/b] - the identical program as plain Python, with no executable inside at all. Use this if your antivirus dislikes the exe. Double-click [i]Run PalSchematics.bat[/i] (needs Python 3.10+; it sets itself up on first run).
+[/list]
+Some antivirus tools flag [i]any[/i] PyInstaller executable purely because of how
+it is packed. That is what the source download is for.
+
+[size=4]Source code[/size]
+Everything is public, including build instructions that reproduce the exe:
+[url=https://github.com/philipjonas88-cpu/PalSchematics]github.com/philipjonas88-cpu/PalSchematics[/url]
+
+The program makes no network connections at runtime, reads nothing outside the
+save folder you point it at, and writes nothing except that save and its backup.
+
+[size=4]Credits[/size]
+[list]
+[*]Created by [b]Philip Jonas[/b].
+[*]Save parsing uses the MIT-licensed [b]palworld-save-tools[/b] library by cheahjs.
+[*]Schematic data and item icons come from [url=https://paldb.cc/en/Schematic]paldb.cc[/url].
+[*]Oodle decompression uses Palworld's own runtime, which is not distributed here.
+[/list]
+MIT licensed. Fan-made tool - not affiliated with Pocketpair, Inc.
+
+[size=4]Support[/size]
+If this saved you some time: [url=https://paypal.me/philipjonas1]paypal.me/philipjonas1[/url]
