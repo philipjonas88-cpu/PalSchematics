@@ -78,7 +78,7 @@ def add_tree(zf: zipfile.ZipFile, tree: str, prefix: str = "") -> None:
 
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
-    version = "1.0"
+    version = "1.1"
     exe = os.path.join(ROOT, "dist", "PalSchematics.exe")
 
     if os.path.exists(exe):

@@ -14,11 +14,81 @@ from . import inventory, saveio
 from .catalog import GROUPINGS, Catalog, Schematic
 
 APP = "PalSchematics"
-VERSION = "1.0"
+VERSION = "1.1"
 CHECKED, UNCHECKED = "☑", "☐"
 
 # A Palworld save is ~48 MB of GVAS once unpacked; parsing takes a while, so
 # every save operation runs on a worker thread and reports back through a queue.
+
+
+class PlayerPicker(tk.Toplevel):
+    """Asks which character the schematics are for.
+
+    A dedicated server world holds every player who has ever joined, so after
+    loading one there is a real choice to make. Showing each character's level
+    and how full their bag is makes it obvious which one is yours.
+    """
+
+    def __init__(self, master, players, containers, preselect: int = 0):
+        super().__init__(master)
+        self.title("Which player?")
+        self.resizable(False, False)
+        self.transient(master)
+        self.result: int | None = None
+
+        frame = ttk.Frame(self, padding=12)
+        frame.pack(fill="both", expand=True)
+        ttk.Label(frame, text="This save has several characters. "
+                              "Who are the schematics for?",
+                  font=("Segoe UI", 10)).pack(anchor="w", pady=(0, 10))
+
+        cols = ("level", "bag")
+        self.tree = ttk.Treeview(frame, columns=cols, show="tree headings",
+                                 height=min(10, max(3, len(players))), selectmode="browse")
+        self.tree.heading("#0", text="Player")
+        self.tree.heading("level", text="Level")
+        self.tree.heading("bag", text="Backpack")
+        self.tree.column("#0", width=230, stretch=False)
+        self.tree.column("level", width=60, anchor="center", stretch=False)
+        self.tree.column("bag", width=190, anchor="w", stretch=False)
+        self.tree.pack(fill="both", expand=True)
+
+        for i, p in enumerate(players):
+            bag = "player file not found"
+            cont = containers.get(p.backpack_id) if p.backpack_id else None
+            if cont is not None:
+                free = len(cont.free_indices())
+                bag = f"{cont.slot_num - free} of {cont.slot_num} used, {free} free"
+            self.tree.insert("", "end", iid=str(i), text="  " + p.name,
+                             values=(p.level if p.level else "?", bag))
+        if players:
+            iid = str(min(preselect, len(players) - 1))
+            self.tree.selection_set(iid)
+            self.tree.focus(iid)
+
+        row = ttk.Frame(frame)
+        row.pack(fill="x", pady=(12, 0))
+        ttk.Button(row, text="Use this player", command=self._ok).pack(side="right")
+        ttk.Button(row, text="Cancel", command=self._cancel).pack(side="right", padx=(0, 8))
+        self.tree.bind("<Double-1>", lambda _e: self._ok())
+        self.bind("<Return>", lambda _e: self._ok())
+        self.bind("<Escape>", lambda _e: self._cancel())
+
+        self.update_idletasks()
+        x = master.winfo_rootx() + (master.winfo_width() - self.winfo_width()) // 2
+        y = master.winfo_rooty() + 140
+        self.geometry(f"+{max(0, x)}+{max(0, y)}")
+        self.grab_set()
+        self.tree.focus_set()
+
+    def _ok(self):
+        sel = self.tree.selection()
+        self.result = int(sel[0]) if sel else None
+        self.destroy()
+
+    def _cancel(self):
+        self.result = None
+        self.destroy()
 
 
 class App(ttk.Frame):
@@ -65,6 +135,7 @@ class App(ttk.Frame):
         bar = tk.Menu(self.master)
         m = tk.Menu(bar, tearoff=0)
         m.add_command(label="Open Level.sav...", command=self.open_save, accelerator="Ctrl+O")
+        m.add_command(label="Choose player...", command=self.choose_player)
         m.add_separator()
         m.add_command(label="Exit", command=self.master.destroy)
         bar.add_cascade(label="File", menu=m)
@@ -278,13 +349,34 @@ class App(ttk.Frame):
             labels = [p.label() for p in self.players]
             self.cmb_player.configure(values=labels, state="readonly")
             names = [p.name for p in self.players]
-            self.cmb_player.current(names.index(keep_player) if keep_player in names else 0)
+            chosen = names.index(keep_player) if keep_player in names else 0
+            self.cmb_player.current(chosen)
             self.cmb_container.configure(state="readonly")
             self.on_player_change()
+            # With more than one character in the world there is a real choice
+            # to make, so ask outright rather than silently picking the first.
+            if len(self.players) > 1 and keep_player is None:
+                self.choose_player(preselect=chosen)
             kind = "dedicated server world" if len(self.players) > 1 else "save"
             self.var_status.set(f"Loaded {kind}: {len(self.players)} player(s).")
 
         self.run_worker(work, done)
+
+
+    def choose_player(self, preselect: int | None = None) -> None:
+        """Open the player picker. Also reachable from File > Choose player."""
+        if not (self.save and self.players):
+            messagebox.showinfo(APP, "Open a Level.sav first.")
+            return
+        if preselect is None:
+            preselect = max(0, self.cmb_player.current())
+        containers = inventory.containers_by_guid(self.save)
+        dlg = PlayerPicker(self.master, self.players, containers, preselect)
+        self.master.wait_window(dlg)
+        if dlg.result is not None:
+            self.cmb_player.current(dlg.result)
+            self.on_player_change()
+            self.log(f"player: {self.players[dlg.result].name}")
 
     def on_player_change(self, _event=None) -> None:
         idx = self.cmb_player.current()

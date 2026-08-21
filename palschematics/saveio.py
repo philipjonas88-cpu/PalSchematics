@@ -27,7 +27,7 @@ import zlib
 
 import palworld_save_tools.palsav as palsav
 import palworld_save_tools.rawdata.character as character
-from palworld_save_tools.archive import FArchiveWriter
+from palworld_save_tools.archive import FArchiveReader, FArchiveWriter
 from palworld_save_tools.gvas import GvasFile
 from palworld_save_tools.paltypes import (
     PALWORLD_CUSTOM_PROPERTIES,
@@ -190,6 +190,50 @@ def _encode_char_bytes(prop) -> bytes:
 
 character.decode_bytes = _decode_char_bytes
 character.encode_bytes = _encode_char_bytes
+
+
+# --------------------------------------------------------------------------
+# SetProperty
+#
+# Palworld's later updates introduced set-typed world properties (the pal
+# locker, for one: .worldSaveData.InLockerCharacterInstanceIDArray).
+# palworld_save_tools 0.24 does not implement the type at all and aborts the
+# whole parse, so a save from an updated server cannot be opened.
+#
+# We do not need to understand the contents -- nothing here edits them -- so
+# the payload is carried through verbatim. The layout of a tagged SetProperty
+# is: inner type (FString), optional guid, then `size` bytes of payload
+# (removed-count u32, count u32, then the elements). Reading and writing that
+# span unchanged keeps the file byte-for-byte identical, which the round-trip
+# check then proves.
+# --------------------------------------------------------------------------
+_orig_reader_property = FArchiveReader.property
+_orig_writer_property_inner = FArchiveWriter.property_inner
+
+
+def _reader_property(self, type_name, size, path, nested_caller_path=""):
+    if type_name == "SetProperty" and path not in self.custom_properties:
+        return {
+            "set_type": self.fstring(),
+            "id": self.optional_guid(),
+            "value": {"raw": list(self.read(size))},
+            "type": "SetProperty",
+        }
+    return _orig_reader_property(self, type_name, size, path, nested_caller_path)
+
+
+def _writer_property_inner(self, property_type, property):
+    if property_type == "SetProperty" and "custom_type" not in property:
+        self.fstring(property["set_type"])
+        self.optional_guid(property.get("id", None))
+        payload = bytes(property["value"]["raw"])
+        self.write(payload)
+        return len(payload)
+    return _orig_writer_property_inner(self, property_type, property)
+
+
+FArchiveReader.property = _reader_property
+FArchiveWriter.property_inner = _writer_property_inner
 
 CUSTOM = {CHAR_KEY: PALWORLD_CUSTOM_PROPERTIES[CHAR_KEY]}
 

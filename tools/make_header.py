@@ -178,7 +178,7 @@ def header(w: int, h: int, out: str, compact: bool = False) -> None:
     d.line([(tx, ty2 + 26), (tx + tb_w, ty2 + 26)], fill=GRID)
     d.line([(tx + 196, ty2), (tx + 196, ty2 + tb_h)], fill=GRID)
     d.text((tx + 12, ty2 + 5), "PALSCHEMATICS", font=font("seguisb.ttf", 17), fill=INK)
-    d.text((tx + 206, ty2 + 5), "REV 1.0", font=font("seguisb.ttf", 17), fill=GOLD)
+    d.text((tx + 206, ty2 + 5), "REV 1.1", font=font("seguisb.ttf", 17), fill=GOLD)
     d.text((tx + 12, ty2 + 33), "PHILIP JONAS", font=font("segoeui.ttf", 15), fill=(150, 176, 202))
     d.text((tx + 206, ty2 + 33), "MIT", font=font("segoeui.ttf", 15), fill=(150, 176, 202))
 
